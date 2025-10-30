@@ -1,0 +1,78 @@
+# Enterprise LOC Counter - Multiple Organizations with Test/Prod Pipeline
+# Purpose: Count lines of code across multiple GitHub organizations in a staged pipeline
+# Trigger: Manual dispatch only
+# Runner: Ubuntu Linux (uses apt-get for dependencies)
+# Features: 
+#   - Process multiple orgs using comma-separated values (e.g., "org1,org2,org3")
+#   - Two-stage pipeline: TEST stage runs first, PROD only runs if TEST succeeds
+#   - 60-minute timeout on PROD stage for large codebases
+# Use this for: Enterprise scenarios with multiple organizations and staged deployments
+# IMPORTANT: Use ORGANIZATION NAMES only (e.g., "tajawal"), not user names
+name: "Enterprise LOC Counter (Multi-Org Pipeline)"
+on:
+  workflow_dispatch:
+    inputs:
+      test_org_name:
+        description: 'TEST environment ORGANIZATION NAME(S) - comma-separated (e.g., "test-org1,test-org2")'
+        required: true
+        default: ''
+      prod_org_name:
+        description: 'PROD environment ORGANIZATION NAME(S) - comma-separated (e.g., "prod-org1,prod-org2")'
+        required: true
+        default: ''
+jobs:
+  test-stage:
+    name: "TEST Stage - Count LOC"
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby environment
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 3.0
+
+      - name: Install cloc (lines of code counter)
+        run: sudo apt-get install -y cloc
+
+      - name: Count LOC for TEST organizations
+        run: |
+          IFS=',' read -ra ORGS <<< "${{ github.event.inputs.test_org_name }}"
+          for org in "${ORGS[@]}"; do
+            echo "Processing TEST org: $org"
+            bundle exec ruby loc.rb "$org"
+          done
+  prod-stage:
+    name: "PROD Stage - Count LOC"
+    timeout-minutes: 60
+    needs: test-stage  # Only runs if TEST stage succeeds
+    env:
+      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+    # Note: For very large codebases, consider using a larger GitHub-hosted runner
+    # See: https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/about-larger-runners
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby environment
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 3.0
+
+      - name: Install cloc (lines of code counter)
+        run: sudo apt-get install -y cloc
+
+      - name: Count LOC for PROD organizations
+        run: |
+          IFS=',' read -ra ORGS <<< "${{ github.event.inputs.prod_org_name }}"
+          for org in "${ORGS[@]}"; do
+            echo "Processing PROD org: $org"
+            bundle exec ruby loc.rb "$org"
+          done
+

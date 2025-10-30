@@ -1,0 +1,42 @@
+# Quick LOC Counter - Single Organization/User
+# Purpose: Count lines of code for a single GitHub organization or user
+# Trigger: Manual dispatch or on push to repository
+# Runner: macOS (uses Homebrew for dependencies)
+# Use this for: Quick, one-off LOC counts of a single org/user
+# IMPORTANT: The parameter should be the GitHub ORGANIZATION NAME (e.g., "tajawal"), not a user name
+name: "Quick LOC Counter (Single Org/User)"
+on:
+  push: {}
+  workflow_dispatch: 
+    inputs:
+      org_or_user:
+        description: 'GitHub ORGANIZATION NAME to count (e.g., "tajawal"). Use the org name, not user name.'
+        required: false
+        type: string
+jobs:
+  count-loc:
+    name: Count Lines of Code
+    runs-on: macos-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Setup Ruby environment
+        uses: ruby/setup-ruby@v1
+        with:
+          bundler-cache: true
+          ruby-version: 3.0
+
+      - name: Install dependencies (cloc and gems)
+        run: script/bootstrap
+      
+      - name: Count LOC for specified org/user
+        if: github.event_name == 'workflow_dispatch'
+        run: script/count ${{ inputs.org_or_user }}
+      
+      - name: Count LOC for default test org
+        if: github.event_name != 'workflow_dispatch'
+        run: script/count balter-test-org
+
