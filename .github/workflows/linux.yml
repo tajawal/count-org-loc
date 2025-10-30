@@ -15,7 +15,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      metadata: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -41,7 +40,6 @@ jobs:
     needs: test
     permissions:
       contents: read
-      metadata: read
     #May need to add a "Pay as you go", larger GitHub-hosted runner depending on the size of each repo
     #See https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/about-larger-runners
     runs-on: ubuntu-latest
