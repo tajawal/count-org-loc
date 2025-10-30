@@ -13,6 +13,7 @@ on:
         description: 'GitHub ORGANIZATION NAME to count (e.g., "tajawal"). Use the org name, not user name.'
         required: false
         type: string
+        default: 'tajawal'
 jobs:
   count-loc:
     name: Count Lines of Code
