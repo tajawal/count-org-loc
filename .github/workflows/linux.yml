@@ -10,11 +10,12 @@ on:
         description: 'Name of the PROD environment GitHub Organization(s)'
         required: true
         default: ''
-env:
-  GITHUB_TOKEN: ${{ secrets.ORG_GITHUB_TOKEN }}
 jobs:
   test:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      metadata: read
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -33,9 +34,14 @@ jobs:
           for org in "${ORGS[@]}"; do
             bundle exec ruby loc.rb "$org"
           done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   prod:
     timeout-minutes: 60
     needs: test
+    permissions:
+      contents: read
+      metadata: read
     #May need to add a "Pay as you go", larger GitHub-hosted runner depending on the size of each repo
     #See https://docs.github.com/en/actions/using-github-hosted-runners/about-larger-runners/about-larger-runners
     runs-on: ubuntu-latest
@@ -57,3 +63,5 @@ jobs:
           for org in "${ORGS[@]}"; do
             bundle exec ruby loc.rb "$org"
           done
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
