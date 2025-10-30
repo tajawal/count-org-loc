@@ -36,8 +36,3 @@ jobs:
       - name: Count LOC for specified org/user
         if: github.event_name == 'workflow_dispatch'
         run: script/count ${{ inputs.org_or_user }}
-      
-      - name: Count LOC for default test org
-        if: github.event_name != 'workflow_dispatch'
-        run: script/count balter-test-org
-
